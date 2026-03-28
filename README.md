@@ -1,34 +1,42 @@
-# 🚛 Logistics Forecast Analysis Swarm
+# 🚛 Logistics Forecast Analysis Swarm v2
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Pandas](https://img.shields.io/badge/Library-Pandas-orange.svg)](https://pandas.pydata.org/)
-[![Gemini API](https://img.shields.io/badge/AI-Gemini%201.5%20Flash-purple.svg)](https://ai.google.dev/)
+[![Gemini AI](https://img.shields.io/badge/AI-Gemini%201.5%20Flash-purple.svg)](https://ai.google.dev/)
 
-A sophisticated multi-agent pipeline designed to automate the detection of logistics forecast deviations. This "swarm" identifies anomalies at the country and lane levels, compares them against historical actuals, and leverages Generative AI to propose data-driven volume overrides with underlying justifications.
+A sophisticated 8-agent pipeline designed to automate the auditing of EU logistics forecasts. This system identifies anomalies using statistical Z-Scores, validates them against 2-year historical actuals, and leverages Generative AI for structured overrides and interactive reporting.
 
 ---
 
-## 🏗️ Swarm Architecture
+## 🏗️ Swarm Architecture (8 Agents)
 
-The pipeline is structured as a series of specialized agents, each focused on a specific layer of the data hierarchy. This approach ensures that the "cognitive" cost (LLM calls) is reserved only for the final reasoning step, while statistical heavy lifting is handled by efficient data processing libraries.
+The v2 Swarm uses a multi-layered verification strategy where results are audited and refined before being finalized.
 
 ```mermaid
 graph TD
-    A[Orchestrator] -->|Flagged Countries| B[Granularity Specialist]
-    B -->|Flagged Lanes| C[Anomaly Hunter]
-    C -->|Trend Analysis| D[Route Specialist]
-    D -->|Top 20 Variations| E[Correction Agent ✨]
-    E -->|JSON Output| F(proposed_overrides.json)
-
-    subgraph "Statistical Analysis (Pandas)"
+    A[1. Orchestrator] -->|Flagged Countries| B[2. Granularity Spec]
+    B -->|Flagged Lanes| C[3. Anomaly Hunter]
+    C -->|Trend Analysis| D[4. Route Specialist]
+    D -->|Top 20 + Ghost| E[5. Correction Agent ✨]
+    E -->|Proposals| F[6. Critic Agent ⚖️]
+    F -->|Refined Overrides| G[7. Forecast Merger 📊]
+    F -->|Data Bundle| H[8. Dashboard Agent 💻]
+    
+    subgraph "Statistical Engine (Pandas)"
     A
     B
     C
     D
     end
 
-    subgraph "Cognitive Reasoning (Gemini)"
+    subgraph "Cognitive Audit (Gemini Flash)"
     E
+    F
+    end
+
+    subgraph "Output & Persistence"
+    G
+    H
     end
 ```
 
@@ -38,25 +46,30 @@ graph TD
 
 ```text
 .
-├── actuals/                # Directory for historical actuals CSVs
-│   └── recent_actuals.csv  # Ground-truth shipping volumes
-├── forecasts/              # Directory for raw forecast data
-│   └── weekly_forecast_data.csv 
-├── main_swarm.py           # The core multi-agent logic 🛡️
-├── dummy_fcst_generator.py # Synthetic data generator for testing 🧪
-├── requirements.txt        # Project dependencies
-└── proposed_overrides.json # Generated results (post-run)
+├── actuals/                # 2-year historical shipping volumes
+│   └── historical_actuals.xlsx
+├── forecasts/              # Raw and processed forecast exports
+│   ├── weekly_forecast_data.xlsx
+│   └── weekly_forecast_data_overrides.xlsx  # Final output
+├── main_swarm.py           # Core 8-agent logic 🛡️
+├── dummy_fcst_generator.py # Data generator with seasonality logic 🧪
+├── dashboard_template.html # Interactive UI source 🎨
+├── requirements.txt        # Python dependencies
+└── .env                    # Local credentials (IGNORED)
 ```
 
 ---
 
 ## 👥 The Agents
 
-1.  **Orchestrator**: Ingests the weekly forecast from `forecasts/`, pivots volume by country, and flags variations > 2%. 
-2.  **Granularity Specialist**: Drills down into `modality` and `lane_type` for flagged countries, identifying slices with > 5% deviation.
-3.  **Anomaly Hunter**: Performs reality checks by comparing forecasts against historical actuals from `actuals/`.
-4.  **Route Specialist**: Filters down to the Top 20 impact routes by absolute volume difference.
-5.  **Correction Agent (Gemini)**: The AI "brain" that reviews the top anomalies and generates a `proposed_overrides.json` file with reasoned adjustments.
+1.  **Orchestrator**: Country-level Z-Score analysis to identify regional shifts.
+2.  **Granularity Specialist**: Drill-down to Country × Lane Type to find specific modality issues.
+3.  **Anomaly Hunter**: Computes WMAPE bias and YoY seasonality benchmarks from 2-year history.
+4.  **Route Specialist**: Identifies Top 20 impact routes and detects "Ghost Routes" (forecasts without actuals).
+5.  **Correction Agent (Gemini)**: Generates structured overrides with analytical justifications.
+6.  **Critic Agent (Gemini)**: Challenges the Correction Agent's output, adjusting confidence scores.
+7.  **Forecast Merger**: Stamps overrides directly into a new Excel export for operation use.
+8.  **Dashboard Agent**: Injects analysis data into the HTML template for high-level review.
 
 ---
 
@@ -64,39 +77,23 @@ graph TD
 
 ### 📋 Prerequisites
 
-Ensure you have Python 3.8+ installed and the necessary dependencies:
-
 ```bash
 pip install -r requirements.txt
 ```
 
-### 🧪 Generating Test Data (Optional)
-
-If you need to regenerate the test datasets with synthetic anomalies (such as the German Rail spike or Air lane reality gaps), run:
-
+### 🧪 Generating Data
+The new generator produces **wide-format Excel files** with 2 years of weekly history and realistic seasonality:
 ```bash
 python dummy_fcst_generator.py
 ```
-*Note: The generator creates files in the root; you may need to move them to `/forecasts/` and `/actuals/` as required by the script.*
 
-### 🔑 API Configuration
-
-The swarm requires a Google Gemini API key for the final Correction Agent. You can obtain one at [Google AI Studio](https://aistudio.google.com/).
-
-#### Windows (CMD)
-```cmd
-set GEMINI_API_KEY=your_api_key_here
-```
-
-#### Windows (PowerShell)
-```powershell
-$env:GEMINI_API_KEY="your_api_key_here"
+### 🔑 Configuration
+Create a `.env` file in the root:
+```text
+GEMINI_API_KEY=your_key_here
 ```
 
 ### 🏃 Running the Swarm
-
-Simply execute the main orchestration script:
-
 ```bash
 python main_swarm.py
 ```
@@ -104,14 +101,6 @@ python main_swarm.py
 ---
 
 ## 📊 Outputs
-
-- **Console Logs**: Real-time progress tracking of each agent's analysis.
-- **proposed_overrides.json**: A machine-readable list of corrections including:
-    - `route`: The specific origin-destination lane.
-    - `proposed_volume`: The data-driven volume correction.
-    - `justification`: The AI's analytical reasoning based on historical trends.
-
----
-
-> [!TIP]
-> This system is designed to be **"frugal by design"**. By filtering millions of rows down to just the top 20 critical anomalies using Pandas before involving the LLM, we ensure maximum accuracy at near-zero API cost.
+- **Interactive Dashboard**: `forecast_quality_dashboard.html` for visualizing bias and trends.
+- **Excel Overrides**: `forecasts/weekly_forecast_data_overrides.xlsx` with new `override_volume` columns.
+- **Human Review**: `flagged_for_review.json` containing low-confidence overrides for manual audit.
