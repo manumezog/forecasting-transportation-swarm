@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Logistics Forecast Quality Dashboard v2</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<!-- __DATA__ -->
+<style>
+:root{--bg:#0d1117;--sf:#161b22;--sf2:#1f2937;--bd:#30363d;--ac:#3b82f6;--gr:#10b981;--am:#f59e0b;--re:#ef4444;--pu:#8b5cf6;--tx:#e6edf3;--mt:#8b949e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+.hero{background:linear-gradient(135deg,#1a2f4e,#0d1117);border-bottom:1px solid var(--bd);padding:36px 48px 28px}
+.hero h1{font-size:24px;font-weight:800;color:#fff;letter-spacing:-.5px}
+.hero p{margin-top:5px;color:var(--mt);font-size:13px}
+.hero-meta{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+.hero-meta span{background:rgba(255,255,255,.06);border:1px solid var(--bd);border-radius:6px;padding:4px 11px;font-size:11px;color:var(--mt)}
+.hero-meta span b{color:var(--tx)}
+.tabs{display:flex;border-bottom:1px solid var(--bd);background:var(--sf);padding:0 48px}
+.tab{padding:13px 18px;cursor:pointer;font-size:12px;font-weight:500;color:var(--mt);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--tx)}.tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+.tab .badge-tab{background:var(--re);color:#fff;border-radius:10px;padding:1px 6px;font-size:9px;margin-left:4px}
+.cnt{max-width:1440px;margin:0 auto;padding:28px 48px}
+.page{display:none}.page.active{display:block}
+.st{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--ac);margin:28px 0 12px}
+.st:first-child{margin-top:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:28px}
+.kpi{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac);border-radius:10px 10px 0 0}
+.kpi.w::before{background:var(--am)}.kpi.d::before{background:var(--re)}.kpi.g::before{background:var(--gr)}.kpi.p::before{background:var(--pu)}
+.kpi-l{font-size:10px;color:var(--mt);margin-bottom:5px;font-weight:500}.kpi-v{font-size:26px;font-weight:800;color:#fff}.kpi-s{font-size:10px;color:var(--mt);margin-top:2px}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.cc{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:20px}
+.cc h3{font-size:12px;font-weight:600;margin-bottom:3px}.cc p{font-size:11px;color:var(--mt);margin-bottom:16px}
+.cw{position:relative;height:250px}.fw{grid-column:1/-1}
+.tc{background:var(--sf);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:28px}
+.th{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.th h3{font-size:13px;font-weight:600}.th p{font-size:11px;color:var(--mt)}
+.ts{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:#0d1117;padding:9px 13px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mt);white-space:nowrap}
+td{padding:9px 13px;font-size:12px;border-bottom:1px solid rgba(48,54,61,.4);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+.rd td{background:rgba(239,68,68,.05)}.rw td{background:rgba(245,158,11,.04)}.ri td{background:rgba(59,130,246,.03)}.rr td{background:rgba(239,68,68,.07)}
+.cp{color:var(--re);font-weight:600}.cn{color:var(--gr);font-weight:600}
+.jc,.cc2{white-space:normal;max-width:260px;font-size:11px;color:var(--mt);line-height:1.5}
+.b{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.b-road{background:rgba(59,130,246,.15);color:#60a5fa}.b-rail{background:rgba(139,92,246,.15);color:#a78bfa}
+.b-air{background:rgba(251,191,36,.15);color:#fbbf24}.b-sea{background:rgba(16,185,129,.15);color:#34d399}.b-ghost{background:rgba(239,68,68,.15);color:#f87171}
+.cb{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600}
+.ch{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+.cm{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.cl{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.tw{display:flex;align-items:center;gap:7px;cursor:pointer}
+.at{width:15px;height:15px;cursor:pointer;accent-color:var(--gr)}
+.al{font-size:10px;font-weight:600}.al.app{color:var(--gr)}.al.rej{color:var(--am)}
+.btn-g{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.btn{padding:7px 14px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.bp{background:var(--ac);color:#fff}.bp:hover{background:#2563eb}
+.bs{background:var(--gr);color:#fff}.bs:hover{background:#059669}
+.bw{background:var(--am);color:#000}.bw:hover{background:#d97706}
+.bd2{background:rgba(239,68,68,.12);color:var(--re);border:1px solid rgba(239,68,68,.25)}.bd2:hover{background:rgba(239,68,68,.22)}
+.bg2{background:rgba(255,255,255,.06);color:var(--tx);border:1px solid var(--bd)}.bg2:hover{background:rgba(255,255,255,.1)}
+.alert{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#fca5a5}
+.alert strong{color:var(--re)}
+#exp-status{font-size:11px;color:var(--gr);margin-top:6px;display:none}
+#apv-ctr{font-size:12px;color:var(--gr);font-weight:600}
+.ng{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+.nc{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:20px}
+.nc h3{font-size:12px;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.nc p,.nc li{font-size:12px;color:#8d96a0;line-height:1.65}.nc ul{margin-left:14px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dd{background:var(--re)}.dw{background:var(--am)}.da{background:var(--ac)}.dg{background:var(--gr)}
+footer{text-align:center;border-top:1px solid var(--bd);padding:20px;font-size:11px;color:var(--mt)}
+@media(max-width:900px){.cg,.ng{grid-template-columns:1fr}.hero,.cnt,.tabs{padding-left:20px;padding-right:20px}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>Logistics Forecast Quality Dashboard</h1>
+  <p>Logistics Analysis Swarm v2 — Z-Score · WMAPE · YoY Seasonality · Gemini Flash × 2</p>
+  <div class="hero-meta">
+    <span>Source: <b id="fc-name"></b></span>
+    <span>Generated: <b id="ts"></b></span>
+    <span>Agents: <b>8</b></span>
+    <span>Methods: <b>Z-Score · WMAPE · YoY · Gemini Critic</b></span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('overview',this)">Overview</div>
+  <div class="tab" onclick="show('analysis',this)">Version Analysis</div>
+  <div class="tab" onclick="show('anomaly',this)">Anomaly Hunter</div>
+  <div class="tab" onclick="show('overrides',this)">Override Proposals</div>
+  <div class="tab" onclick="show('integrity',this)">Data Integrity <span class="badge-tab" id="ghost-badge"></span></div>
+</div>
+
+<!-- OVERVIEW -->
+<div id="page-overview" class="page active"><div class="cnt">
+  <div class="st">Executive Summary</div>
+  <div class="kpi-grid" id="kpis"></div>
+  <div class="st">Findings &amp; Recommendations</div>
+  <div class="ng">
+    <div class="nc"><h3><span class="dot dd"></span> Germany Rail — Variance Spike</h3><p>Z-Score analysis isolated <strong>Germany Rail</strong> as the only statistically anomalous country-lane. A +40–50% uplift in v_current vs v_prior registers well above 2.5σ — not routine seasonal noise but a black-swan event requiring an override decision.</p></div>
+    <div class="nc"><h3><span class="dot dw"></span> Air Lanes — Structural Reality Gap</h3><p>The WMAPE bias tracker confirms a <strong>chronic 20–30% over-forecast</strong> on all Air lanes, visible across the full 2-year history. The Correction Agent applied standing haircuts; the Critic Agent validated these as high-confidence corrections.</p></div>
+    <div class="nc"><h3><span class="dot da"></span> YoY Seasonality Context</h3><p>Routes where the forecast uplift mirrors same-week-last-year actuals are treated as <em>planned peaks</em>, not anomalies. This prevents false positives driven by known seasonal patterns like Q4 peak or spring ramp-up.</p></div>
+    <div class="nc"><h3><span class="dot dg"></span> Critic Agent Output</h3><p>A second Gemini agent challenged every proposed override and re-scored confidence. Low-confidence items (<0.5) are routed to <code>flagged_for_review.json</code> for human sign-off before any operational system update.</p></div>
+  </div>
+</div></div>
+
+<!-- VERSION ANALYSIS -->
+<div id="page-analysis" class="page"><div class="cnt">
+  <div class="st">Country-Level Volume</div>
+  <div class="cg">
+    <div class="cc"><h3>v_prior vs v_current (Total Volume)</h3><p>Aggregated across all forecasted weeks</p><div class="cw"><canvas id="cVol"></canvas></div></div>
+    <div class="cc"><h3>Z-Score by Country</h3><p>Bars beyond ±1.5σ triggered the sub-agent cascade</p><div class="cw"><canvas id="cZ"></canvas></div></div>
+  </div>
+  <div class="st">Lane-Type Granularity (Flagged Countries)</div>
+  <div class="cg">
+    <div class="cc fw"><h3>Z-Score by Country · Lane Type</h3><p>|Z| > 1.0 combinations forwarded to Anomaly Hunter</p><div class="cw" style="height:300px"><canvas id="lZ"></canvas></div></div>
+  </div>
+  <div class="st">Top 20 Route-Level Deviations</div>
+  <div class="tc">
+    <div class="th"><div><h3>Statistically Anomalous Routes</h3><p>Sorted by absolute volume impact — colour = severity</p></div></div>
+    <div class="ts"><table><thead><tr><th>Route</th><th>Country</th><th>Lane</th><th>Vol Prior</th><th>Vol Current</th><th>Δ vs Prior</th><th>Z-Score</th><th>Fcst Bias</th><th>YoY Δ</th></tr></thead><tbody id="top20-body"></tbody></table></div>
+  </div>
+</div></div>
+
+<!-- ANOMALY HUNTER -->
+<div id="page-anomaly" class="page"><div class="cnt">
+  <div class="st">Forecast Bias Tracking (WMAPE Proxy)</div>
+  <div class="cg">
+    <div class="cc fw"><h3>Forecast Bias % by Lane Type</h3><p>Positive = chronic over-forecasting vs 2-year historical average</p><div class="cw"><canvas id="wmape"></canvas></div></div>
+  </div>
+  <div class="st">Year-over-Year Seasonality Check</div>
+  <div class="cg">
+    <div class="cc fw"><h3>v_current Δ vs Same Week Last Year</h3><p>Near-zero = planned seasonal peak · Large positive = unvalidated spike</p><div class="cw" style="height:300px"><canvas id="yoy"></canvas></div></div>
+  </div>
+</div></div>
+
+<!-- OVERRIDES -->
+<div id="page-overrides" class="page"><div class="cnt">
+  <div class="st">Override Approval Workflow</div>
+  <div class="btn-g">
+    <button class="btn bs" onclick="approveAll()">Approve All</button>
+    <button class="btn bd2" onclick="rejectAll()">Reject All</button>
+    <button class="btn bp" onclick="exportApproved()">Export Approved JSON</button>
+    <button class="btn bg2" onclick="resetApprovals()">Reset</button>
+  </div>
+  <div id="exp-status"></div>
+  <div id="rev-alert" class="alert" style="display:none"><strong>Human Review Required:</strong> <span id="rev-count"></span> override(s) have AI confidence &lt; 0.5 and are pre-unchecked.</div>
+  <div class="cg" style="margin-bottom:28px">
+    <div class="cc fw"><h3>Proposed Override Volume by Route</h3><p>Colour = AI confidence: green ≥0.75 · amber ≥0.5 · red &lt;0.5</p><div class="cw"><canvas id="ovChart"></canvas></div></div>
+  </div>
+  <div class="tc">
+    <div class="th"><div><h3>Override Proposals Detail</h3><p>Check/uncheck to approve · Export sends approved list to clipboard</p></div><div id="apv-ctr"></div></div>
+    <div class="ts"><table><thead><tr><th>Decision</th><th>Route</th><th>Override Pkgs</th><th>Override Vol</th><th>Confidence</th><th>Justification</th><th>Critic Comment</th></tr></thead><tbody id="ov-body"></tbody></table></div>
+  </div>
+</div></div>
+
+<!-- DATA INTEGRITY -->
+<div id="page-integrity" class="page"><div class="cnt">
+  <div class="st">Ghost Route Detection</div>
+  <div id="ghost-content"></div>
+</div></div>
+
+<footer>Logistics Analysis Swarm v2 &mdash; Pandas · Z-Score · WMAPE · YoY · Gemini Flash × 2</footer>
+
+<script>
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = (v, digits=1) => v == null ? 'N/A' : (v>0?'+':'')+v.toFixed(digits);
+const fmtN = v => v == null ? 'N/A' : new Intl.NumberFormat().format(Math.round(v));
+const GRID='rgba(48,54,61,.5)',MT='#8b949e';
+const DS={legend:{labels:{color:MT,font:{size:10},boxWidth:11}},tooltip:{backgroundColor:'#1f2937',titleColor:'#e6edf3',bodyColor:MT}};
+const SC={x:{ticks:{color:MT,font:{size:10}},grid:{color:GRID}},y:{ticks:{color:MT,font:{size:10}},grid:{color:GRID}}};
+const confColor = c => c>=.75?'rgba(16,185,129,.75)':c>=.5?'rgba(245,158,11,.75)':'rgba(239,68,68,.75)';
+const laneClass = l => ({'Road':'b-road','Rail':'b-rail','Air':'b-air','Sea':'b-sea'}[l]||'b-ghost');
+const rowClass  = z => Math.abs(z)>2.5?'rd':Math.abs(z)>1.5?'rw':'ri';
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', ()=>{
+  $('fc-name').textContent = D.fc_name;
+  $('ts').textContent = D.generated;
+  buildKPIs();
+  buildTop20();
+  buildOverrideTable();
+  buildGhostSection();
+  if(D.kpis.n_ghost>0) $('ghost-badge').textContent = D.kpis.n_ghost;
+  const rc = D.kpis.n_review;
+  if(rc>0){$('rev-alert').style.display='block';$('rev-count').textContent=rc;}
+  updateCounter();
+});
+
+// ── KPIs ─────────────────────────────────────────────────────────────────────
+function buildKPIs(){
+  const items=[
+    {cls:'d',label:'Countries Flagged (|Z|>1.5)',val:D.kpis.n_flagged,sub:'Z-Score statistical flagging'},
+    {cls:'w',label:'Routes with Stat. Anomaly',val:D.kpis.n_top20,sub:'|Z| > 1.0 on route delta'},
+    {cls:'p',label:'Overrides Proposed',val:D.kpis.n_overrides,sub:'Correction + Critic Agents'},
+    {cls:'w',label:'Flagged for Human Review',val:D.kpis.n_review,sub:'Confidence < 0.5'},
+    {cls:'g',label:'Avg. AI Confidence',val:(D.kpis.avg_conf*100).toFixed(0)+'%',sub:'Post-Critic adjustment'},
+    {cls:D.kpis.n_ghost>0?'d':'g',label:'Ghost Routes Detected',val:D.kpis.n_ghost,sub:'High-vol, zero actuals history'},
+  ];
+  $('kpis').innerHTML = items.map(i=>`<div class="kpi ${i.cls}"><div class="kpi-l">${i.label}</div><div class="kpi-v">${i.val}</div><div class="kpi-s">${i.sub}</div></div>`).join('');
+}
+
+// ── Top-20 Table ──────────────────────────────────────────────────────────────
+function buildTop20(){
+  $('top20-body').innerHTML = D.top20.map(r=>`
+    <tr class="${rowClass(r.z||0)}">
+      <td><strong>${r.route}</strong></td>
+      <td>${r.country}</td>
+      <td><span class="b ${laneClass(r.lane)}">${r.lane}</span></td>
+      <td>${fmtN(r.vol_prior)}</td>
+      <td>${fmtN(r.vol_current)}</td>
+      <td class="${r.pct>0?'cp':'cn'}">${fmt(r.pct)}%</td>
+      <td style="font-weight:700;color:${Math.abs(r.z||0)>2.5?'#f87171':Math.abs(r.z||0)>1.5?'#fbbf24':'#8b949e'}">${r.z!=null?r.z.toFixed(2):'N/A'}</td>
+      <td>${r.bias!=null?fmt(r.bias)+'%':'N/A'}</td>
+      <td>${r.yoy!=null?fmt(r.yoy)+'%':'N/A'}</td>
+    </tr>`).join('');
+}
+
+// ── Override Table ────────────────────────────────────────────────────────────
+function buildOverrideTable(){
+  $('ov-body').innerHTML = D.overrides.map((o,i)=>{
+    const c=o.confidence||.8, isRev=o.review;
+    const cbCls=c>=.75?'ch':c>=.5?'cm':'cl', cbLbl=c>=.75?'High':c>=.5?'Medium':'Low';
+    return `<tr id="ovr-${i}" class="${isRev?'rr':''}">
+      <td><label class="tw"><input type="checkbox" class="at apv-cb" data-i="${i}"
+          data-route="${o.route}" data-vol="${o.volume}" data-qty="${o.qty||''}"
+          ${!isRev?'checked':''}><span class="al ${!isRev?'app':'rej'}">${!isRev?'Approved':'Review'}</span></label></td>
+      <td><strong>${o.route}</strong></td>
+      <td>${o.qty!=null?fmtN(o.qty):'N/A'}</td>
+      <td>${o.volume!=null?fmtN(o.volume):'-'}</td>
+      <td><span class="cb ${cbCls}">${cbLbl} (${c.toFixed(2)})</span></td>
+      <td class="jc">${o.justification||''}</td>
+      <td class="cc2">${o.critic||'—'}</td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('.apv-cb').forEach(cb=>cb.addEventListener('change',()=>{updateLabel(cb);updateCounter();}));
+}
+
+function updateLabel(cb){
+  const l=cb.nextElementSibling;
+  if(cb.checked){l.className='al app';l.textContent='Approved';}
+  else{l.className='al rej';l.textContent='Rejected';}
+}
+function updateCounter(){
+  const tot=document.querySelectorAll('.apv-cb').length, apv=document.querySelectorAll('.apv-cb:checked').length;
+  $('apv-ctr').textContent=`${apv} / ${tot} approved`;
+}
+function approveAll(){document.querySelectorAll('.apv-cb').forEach(cb=>{cb.checked=true;updateLabel(cb);});updateCounter();}
+function rejectAll(){document.querySelectorAll('.apv-cb').forEach(cb=>{cb.checked=false;updateLabel(cb);});updateCounter();}
+function resetApprovals(){document.querySelectorAll('.apv-cb').forEach((cb,i)=>{cb.checked=!D.overrides[i].review;updateLabel(cb);});updateCounter();}
+function exportApproved(){
+  const out=[];
+  document.querySelectorAll('.apv-cb:checked').forEach(cb=>{
+    out.push({route:cb.dataset.route,override_volume:parseFloat(cb.dataset.vol),override_qty:parseInt(cb.dataset.qty)||null});
+  });
+  const json=JSON.stringify(out,null,2);
+  navigator.clipboard.writeText(json).then(()=>{
+    $('exp-status').textContent=out.length+' approved overrides copied to clipboard!';
+    $('exp-status').style.display='block';
+    setTimeout(()=>$('exp-status').style.display='none',3000);
+  }).catch(()=>{const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([json],{type:'application/json'})),download:'approved_overrides.json'});a.click();});
+}
+
+// ── Ghost Routes ──────────────────────────────────────────────────────────────
+function buildGhostSection(){
+  const gc=$('ghost-content');
+  if(!D.ghost_routes||D.ghost_routes.length===0){
+    gc.innerHTML='<p style="color:var(--mt);font-size:13px">No ghost routes detected — all high-volume routes have corresponding historical actuals.</p>';return;
+  }
+  gc.innerHTML=`<div class="alert"><strong>Data Integrity Alert:</strong> ${D.ghost_routes.length} high-volume forecast lanes have ZERO historical actuals. Possible causes: new business, data mapping error, or recently renamed route. Do NOT auto-apply AI overrides to these.</div>
+  <div class="tc"><div class="th"><h3>Ghost Routes</h3><p>Above 75th percentile of total forecast volume, no actuals history</p></div>
+  <div class="ts"><table><thead><tr><th>Route</th><th>Total Fcst Volume</th><th>Status</th><th>Recommended Action</th></tr></thead>
+  <tbody>${D.ghost_routes.map(g=>`<tr><td><strong>${g.route}</strong></td><td>${fmtN(g.total_forecast_volume)}</td><td><span class="b b-ghost">No History</span></td><td>Manual investigation required</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+}
+
+// ── Tab navigation ────────────────────────────────────────────────────────────
+const rendered={};
+function show(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  $('page-'+name).classList.add('active');el.classList.add('active');
+  if(!rendered[name]){rendered[name]=true;
+    if(name==='analysis')renderAnalysis();
+    if(name==='anomaly')renderAnomaly();
+    if(name==='overrides')renderOverrideChart();
+  }
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+function renderAnalysis(){
+  new Chart($('cVol'),{type:'bar',data:{labels:D.country.labels,datasets:[
+    {label:'v_prior',data:D.country.prior,backgroundColor:'rgba(59,130,246,.75)',borderRadius:4},
+    {label:'v_current',data:D.country.current,backgroundColor:'rgba(16,185,129,.75)',borderRadius:4}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:DS,scales:SC}});
+
+  new Chart($('cZ'),{type:'bar',data:{labels:D.country.labels,datasets:[{
+    label:'Z-Score',data:D.country.z,
+    backgroundColor:D.country.z.map(z=>Math.abs(z)>1.5?'rgba(239,68,68,.75)':'rgba(59,130,246,.5)'),borderRadius:4
+  }]},options:{responsive:true,maintainAspectRatio:false,plugins:DS,scales:SC}});
+
+  new Chart($('lZ'),{type:'bar',data:{labels:D.lane.labels,datasets:[
+    {label:'v_prior',data:D.lane.prior,backgroundColor:'rgba(59,130,246,.4)',borderRadius:3,yAxisID:'y'},
+    {label:'v_current',data:D.lane.current,backgroundColor:'rgba(16,185,129,.4)',borderRadius:3,yAxisID:'y'},
+    {label:'Z-Score',data:D.lane.z,type:'line',borderColor:'rgba(245,158,11,.9)',borderWidth:2,pointRadius:4,fill:false,yAxisID:'y1'}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:DS,scales:{
+    x:SC.x,y:{...SC.y,position:'left'},y1:{...SC.y,position:'right',grid:{drawOnChartArea:false}}
+  }}});
+}
+
+function renderAnomaly(){
+  new Chart($('wmape'),{type:'bar',data:{labels:D.wmape.labels,datasets:[{
+    label:'Forecast Bias %',data:D.wmape.values,
+    backgroundColor:D.wmape.values.map(v=>v>0?'rgba(239,68,68,.7)':'rgba(16,185,129,.7)'),borderRadius:4
+  }]},options:{responsive:true,maintainAspectRatio:false,plugins:DS,scales:SC}});
+
+  new Chart($('yoy'),{type:'bar',data:{labels:D.yoy.routes,datasets:[{
+    label:'YoY Δ %',data:D.yoy.values,
+    backgroundColor:D.yoy.values.map(v=>v==null?'rgba(100,100,100,.4)':Math.abs(v)>20?'rgba(239,68,68,.7)':'rgba(59,130,246,.7)'),borderRadius:3
+  }]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:DS,scales:{x:SC.x,y:{...SC.y,ticks:{...SC.y.ticks,font:{size:9}}}}}});
+}
+
+function renderOverrideChart(){
+  new Chart($('ovChart'),{type:'bar',data:{labels:D.overrides.map(o=>o.route),datasets:[{
+    label:'Proposed Override Volume',data:D.overrides.map(o=>o.volume),
+    backgroundColor:D.overrides.map(o=>confColor(o.confidence||.8)),borderRadius:4
+  }]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:DS,scales:{x:SC.x,y:{...SC.y,ticks:{...SC.y.ticks,font:{size:9}}}}}});
+}
+</script>
+</body>
+</html>
